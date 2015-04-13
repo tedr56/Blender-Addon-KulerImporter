@@ -56,12 +56,12 @@ class KulerImporterOperator(bpy.types.Operator):
         KulerPath = KulerParsedUrl.path
         KulerPath = KulerPath.split('-')
         KulerPathLength = len(KulerPath)
+        
         print(KulerPath[KulerPathLength - 3 : KulerPathLength - 1])
+        
         if (KulerPath[KulerPathLength - 3 : KulerPathLength - 1] != ['color', 'theme']):
             self.report({'ERROR'}, "Adobe Url Incorrect\nEx : https://color.adobe.com/Theme-9-color-theme-5838502/")
-            return {'CANCELLED'}    
-
-        
+            return {'CANCELLED'}
         
         KulerId = KulerPath[-1][:-1]
         KulerName = ''.join(KulerPath[:-3])[1:]
@@ -76,24 +76,20 @@ class KulerImporterOperator(bpy.types.Operator):
         if (len(TemporaryDirectory) == 0):
             self.report({'ERROR'}, "Blender Temporary Directory not set!\nCheck in User Preferences > File > Temp")
             return {'CANCELLED'}    
-            
         
         try:
             KulerFile = urlretrieve("https://color.adobe.com/api/v2/themes/" + KulerId + ".png?width=" + str(SizeX) + "&height=" + str(SizeY), TemporaryDirectory + "kuler.png")
         except Exception as e:
             raise NameError("Cannot load image " + KulerId)
         
-        bpy.ops.image.open(filepath = KulerFile[0])
-
-        KulerImage = bpy.data.images['kuler.png']
-
+        KulerImage = bpy.data.images.load(filepath = KulerFile[0])
+        
         KulerPixel = KulerImage.pixels
 
         Y = (SizeY * SizeX * 4) /2
         Xspace = (SizeX * 4) / 5
         Xoffset = Xspace/2
 
-        
         NewKulerPalette = bpy.data.palettes.new(str(KulerName))
         
         for i in range(0, 5):
@@ -110,11 +106,8 @@ class KulerImporterOperator(bpy.types.Operator):
             NewKulerColor.color[1] = Xg
             NewKulerColor.color[2] = Xb
 
-        
-
         return {'FINISHED'}
 
-             
 
 def menu_func(self, context):
     self.layout.operator(KulerImporterOperator.bl_idname)
@@ -122,8 +115,6 @@ def menu_func(self, context):
 def register():
     bpy.utils.register_class(KulerImporterOperator)
     bpy.types.VIEW3D_PT_tools_brush.append(menu_func)
-    
-
 
 def unregister():
     bpy.types.VIEW3D_PT_tools_brush.remove(menu_func)    
